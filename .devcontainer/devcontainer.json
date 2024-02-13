@@ -1,0 +1,14 @@
+{
+	"name": "RDP cuda Container",
+	"build": {
+	  "dockerfile": "Dockerfile",
+	  "context": ".."
+	},
+	"workspaceMount": "source=${localWorkspaceFolder},target=/home/user/torch,type=bind",
+	"workspaceFolder": "/home/user/torch",
+	"forwardPorts": [9002,9999,8890],
+	"postStartCommand": "bash dependencies.sh",
+	"runArgs": ["--gpus=all","--init","--network=host","--shm-size=5gb"],
+	"hostRequirements": {"cpus": 16, "memory": "32gb", "storage": "64gb"},
+	"extensions": ["ms-python.python","ms-toolsai.jupyter","github.copilot","eamodio.gitlens","esbenp.prettier-vscode","mhutchie.git-graph","ms-python.black-formatter"],
+}

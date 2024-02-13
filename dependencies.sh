@@ -1,0 +1,1 @@
+conda install -y notebook ipykernel matplotlib
