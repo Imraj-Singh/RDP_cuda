@@ -20,28 +20,7 @@ torch::Tensor add_cuda(torch::Tensor a, torch::Tensor b) {
     return c;
 }
 
-__global__ void computeValueKerneltest(int min_z, int max_z, int min_y, int max_y, int min_x, int max_x) {
-    int z = blockIdx.z * blockDim.z + threadIdx.z + min_z;
-    int y = blockIdx.y * blockDim.y + threadIdx.y + min_y;
-    int x = blockIdx.x * blockDim.x + threadIdx.x + min_x;
-    printf("Hello from the kernel!\n");
-    printf("z: %d, y: %d, x: %d\n", z, y, x);
-    if (z > max_z || y > max_y || x > max_x) return; // Check bounds
-}
-
-float rdp_compute_val_cudatest(torch::Tensor img) {
-    AT_ASSERTM(img.is_cuda(), "Tensor a must be a CUDA tensor");
-    int max_z = img.size(0) - 1; // Depth
-    int max_y = img.size(1) - 1; // Height
-    int max_x = img.size(2) - 1; // Width
-    double val = 0.0;
-    dim3 threads = dim3(max_z, max_y, max_x);
-    dim3 blocks = dim3(1, 1, 1);
-    computeValueKerneltest<<<blocks, threads>>>(0, max_z, 0, max_y, 0, max_x);
-    return val;
-}
-
-__global__ void convolveAndSumKernel(float* input, float* globalSum, int width, int height, int depth, const float* convKernel) {
+__global__ void computeValueKernel(float* value, float* current_image_estimate, float* kappa, int width, int height, int depth) {
     int x = blockIdx.x * blockDim.x + threadIdx.x;
     int y = blockIdx.y * blockDim.y + threadIdx.y;
     int z = blockIdx.z * blockDim.z + threadIdx.z;
@@ -49,48 +28,49 @@ __global__ void convolveAndSumKernel(float* input, float* globalSum, int width, 
     if (x >= width || y >= height || z >= depth) return; // Boundary check
 
     float sum = 0.0f;
-    int kernelRadius = 1; // For a 3x3x3 kernel
+    float diff = 0.0f;
+    float add = 0.0f;
 
-    // Apply convolution kernel
-    for(int dz = -kernelRadius; dz <= kernelRadius; dz++) {
-        for(int dy = -kernelRadius; dy <= kernelRadius; dy++) {
-            for(int dx = -kernelRadius; dx <= kernelRadius; dx++) {
+    // Apply convolution kernel hard coded 3x3x3 neighbourhood with unity weights
+    for(int dz = -1; dz <= 1; dz++) {
+        for(int dy = -1; dy <= 1; dy++) {
+            for(int dx = -1; dx <= 1; dx++) {
                 int nx = x + dx;
                 int ny = y + dy;
                 int nz = z + dz;
 
                 // Boundary check for the volume
-                if(nx > 0 && nx < width-1 && ny > 0 && ny < height-1 && nz > 0 && nz < depth-1) {
-                    int kernelIndex = (dz + kernelRadius) * 9 + (dy + kernelRadius) * 3 + (dx + kernelRadius);
+                if(nx > 0 && nx < width && ny > 0 && ny < height && nz > 0 && nz < depth) {
                     int inputIndex = nz * width * height + ny * width + nx;
-                    sum += input[inputIndex] * convKernel[kernelIndex];
+                    int neighbourIndex = z * width * height +  y * width + x;
+                    diff = (current_image_estimate[inputIndex] - current_image_estimate[neighbourIndex]);
+                    add = (current_image_estimate[inputIndex] + current_image_estimate[neighbourIndex]);
+                    sum -= pow(diff, 2)/(add + 2*abs(diff) + 1e-9);
                 }
             }
         }
     }
     // Use atomicAdd to safely accumulate the sum into a global variable
-    atomicAdd(globalSum, sum);
+    atomicAdd(value, sum);
 }
 
-torch::Tensor convolveAndSumCuda(torch::Tensor input, torch::Tensor convKernel) {
-    AT_ASSERTM(input.is_cuda(), "Tensor a must be a CUDA tensor");
-    AT_ASSERTM(convKernel.is_cuda(), "Tensor b must be a CUDA tensor");
+torch::Tensor computeValueCuda(torch::Tensor current_image_estimate, torch::Tensor kappa) {
+    AT_ASSERTM(current_image_estimate.is_cuda(), "Tensor current_image_estimate must be a CUDA tensor");
+    AT_ASSERTM(kappa.is_cuda(), "Tensor kappa must be a CUDA tensor");
 
-    int width = input.size(2);
-    int height = input.size(1);
-    int depth = input.size(0);
+    int width = current_image_estimate.size(2);
+    int height = current_image_estimate.size(1);
+    int depth = current_image_estimate.size(0);
     // print input options
-    std::cout << "Input options: " << input.options() << std::endl;
-    auto globalSum = torch::zeros({1}, input.options());
-    dim3 threads = dim3(10, 10, 10);
+    std::cout << "Input options: " << current_image_estimate.options() << std::endl;
+    auto value = torch::zeros({1}, current_image_estimate.options());
+    dim3 threads = dim3(9, 9, 9);
     dim3 blocks = dim3((width + threads.x - 1) / threads.x, (height + threads.y - 1) / threads.y, (depth + threads.z - 1) / threads.z);
-    convolveAndSumKernel<<<blocks, threads>>>(input.data_ptr<float>(), globalSum.data_ptr<float>(), width, height, depth, convKernel.data_ptr<float>());
-
-    return globalSum;
+    computeValueKernel<<<blocks, threads>>>(value.data_ptr<float>(), current_image_estimate.data_ptr<float>(), kappa.data_ptr<float>(), width, height, depth);
+    return value;
 }
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.def("add", &add_cuda, "Element-wise addition of two tensors");
-    m.def("rdp_compute_val", &rdp_compute_val_cudatest, "Compute values of RDP");
-    m.def("convolveAndSum", &convolveAndSumCuda, "Convolve and sum");
+    m.def("compute_value", &computeValueCuda, "Compute RDP value");
 }

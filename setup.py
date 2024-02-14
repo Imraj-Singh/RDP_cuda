@@ -2,10 +2,10 @@ from setuptools import setup
 from torch.utils import cpp_extension
 
 setup(
-    name='add_cuda',
+    name='rdp',
     ext_modules=[
-        cpp_extension.CUDAExtension('add_cuda_ext', [
-            'add_kernel.cu',
+        cpp_extension.CUDAExtension('rdp', [
+            'RelativeDifferencePrior.cu',
         ]),
     ],
     cmdclass={
