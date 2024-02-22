@@ -1,1 +1,2 @@
-conda install -y notebook ipykernel matplotlib
+conda install -y ipywidgets
+pip install -y cupy-cuda11x
