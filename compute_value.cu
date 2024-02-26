@@ -39,6 +39,5 @@ void computeValueKernel(float* tmp_value, const float* image, const float* weigh
             }
         }
     }
-    // Use atomicAdd to safely accumulate the sum into a global variable
     tmp_value[inputIndex] = penalisation_factor[0] * sum; 
 }

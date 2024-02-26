@@ -44,6 +44,5 @@ void computeGradientKernel(float* tmp_grad, const float* image, const float* wei
             }
         }
     }
-    // Use atomicAdd to safely accumulate the sum into a global variable
     tmp_grad[inputIndex] = penalisation_factor[0] * voxel_gradient;
 }
