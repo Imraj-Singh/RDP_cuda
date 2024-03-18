@@ -1,2 +1,1 @@
-conda install -y ipywidgets
-pip install -y cupy-cuda11x
+pip install cupy-cuda11x ipywidgets
