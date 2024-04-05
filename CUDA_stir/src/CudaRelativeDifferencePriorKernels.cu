@@ -75,7 +75,7 @@ void computeRelativeDifferencePriorValueKernel(float* tmp_value, const float* im
     if (y == y_dim - 1) max_dy = 0;
     if (x == 0) min_dx = 0;
     if (x == x_dim - 1) max_dx = 0;
-    // Apply convolution kernel hard coded 3x3x3 neighbourhood with unity weights
+    // Apply convolution kernel hard coded 3x3x3 neighbourhood
     for(int dz = min_dz; dz <= max_dz; dz++) {
         for(int dy = min_dy; dy <= max_dy; dy++) {
             for(int dx = min_dx; dx <= max_dx; dx++) {
