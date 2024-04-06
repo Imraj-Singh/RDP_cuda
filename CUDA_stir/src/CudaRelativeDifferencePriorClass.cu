@@ -258,7 +258,6 @@ Succeeded CudaRelativeDifferencePriorClass<elemT>::set_up(shared_ptr<Discretised
         return Succeeded::no;
     }    
     compute_weights(this->weights, target_cast.get_grid_spacing(), this->only_2D);
-    std::cout << "z_dim: " << z_dim << " y_dim: " << y_dim << " x_dim: " << x_dim << std::endl;
     return Succeeded::yes;
 }
 

@@ -33,3 +33,18 @@ target_link_libraries(CUDA_stir PUBLIC ${STIR_LIBRARIES})
 target_include_directories(CUDA_stir PUBLIC ${STIR_INCLUDE_DIRS})
 target_include_directories(CUDA_stir PUBLIC ${INCLUDE_DIR})
 target_include_directories(CUDA_stir PUBLIC ${Boost_INCLUDE_DIRS})
+
+
+add_executable(compare_both 
+    ${SRC_DIR}/main.cxx
+    ${SRC_DIR}/CudaRelativeDifferencePriorClass.cu
+    ${INCLUDE_DIR}/CudaKernels.h
+    ${INCLUDE_DIR}/CudaRelativeDifferencePriorClass.h
+    $<TARGET_OBJECTS:stir_registries>)
+
+find_package(CUDAToolkit REQUIRED)
+target_link_libraries(compare_both PUBLIC CUDA::cudart)
+target_link_libraries(compare_both PUBLIC ${STIR_LIBRARIES})
+target_include_directories(compare_both PUBLIC ${STIR_INCLUDE_DIRS})
+target_include_directories(compare_both PUBLIC ${INCLUDE_DIR})
+target_include_directories(compare_both PUBLIC ${Boost_INCLUDE_DIRS})

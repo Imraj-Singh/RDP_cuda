@@ -34,7 +34,7 @@ int main()
     prior.compute_gradient(*gradient_sptr, *density_sptr);
     const double my_prior_value = prior.compute_value(*density_sptr);
 
-    std::string gradient_filename = "rdp_gradient_cuda";
+    std::string gradient_filename = "rdp_gradient_cuda_class";
     output_file_format_sptr->write_to_file(gradient_filename, *gradient_sptr);
 
     /////// Return the prior value
