@@ -23,7 +23,6 @@ target_include_directories(CPP_stir PUBLIC ${STIR_INCLUDE_DIRS})
 add_executable(CUDA_stir 
     ${SRC_DIR}/main_cuda_class.cxx
     ${SRC_DIR}/CudaRelativeDifferencePriorClass.cu
-    ${SRC_DIR}/CudaRelativeDifferencePriorKernels.cu
     ${INCLUDE_DIR}/CudaKernels.h
     ${INCLUDE_DIR}/CudaRelativeDifferencePriorClass.h
     $<TARGET_OBJECTS:stir_registries>)

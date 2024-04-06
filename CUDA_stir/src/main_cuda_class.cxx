@@ -34,14 +34,10 @@ int main()
     prior.compute_gradient(*gradient_sptr, *density_sptr);
     const double my_prior_value = prior.compute_value(*density_sptr);
 
-    std::string gradient_filename = "rdp_gradient_cpp";
+    std::string gradient_filename = "rdp_gradient_cuda";
     output_file_format_sptr->write_to_file(gradient_filename, *gradient_sptr);
 
     /////// Return the prior value
     std::cout << "The Prior Value = " << my_prior_value << "\n";
-    // print kappa, gamma, epsilon
-    std::cout << "kappa = " << kappa << "\n";
-    std::cout << "gamma = " << gamma << "\n";
-    std::cout << "epsilon = " << epsilon << "\n";
     return EXIT_SUCCESS;
 }
