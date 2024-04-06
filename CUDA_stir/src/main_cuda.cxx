@@ -8,6 +8,8 @@
 #include "stir/DiscretisedDensityOnCartesianGrid.h"
 #include <vector>
 #include <cmath>
+#include <iostream>
+#include <chrono>
 
 int main() {
     // Use namespace stir
@@ -79,7 +81,7 @@ int main() {
 
     // Call the gradient kernel wrapper
     runGradientKernelOnCPUVectors(tmp_grad, image, weights, kappa, penalisation_factor, gamma, epsilon, z_dim, y_dim, x_dim);
-
+    
     // clone density_sptr and fill it with the gradient values
     shared_ptr<target_type> gradient_sptr(density_sptr->get_empty_copy());
     DiscretisedDensityOnCartesianGrid<3, float>& gradient_cast 
@@ -94,8 +96,8 @@ int main() {
         }
     }
     
-    std::string gradient_filename = "rdp_gradient_cuda";
-    output_file_format_sptr->write_to_file(gradient_filename, *gradient_sptr);
+    //std::string gradient_filename = "rdp_gradient_cuda";
+    //output_file_format_sptr->write_to_file(gradient_filename, *gradient_sptr);
 
     std::vector<float> tmp_value(density_cast.size_all(), 0.0f);
 
@@ -106,8 +108,6 @@ int main() {
     for (int i = 0; i < tmp_value.size(); ++i) {
         sum += tmp_value[i];
     }
-    // The Prior Value = 1.11091e+06
     std::cout << "The Prior Value = " << sum << "\n";
-    // Giving The Prior Value = 1.11089e+06
     return 0;
 }

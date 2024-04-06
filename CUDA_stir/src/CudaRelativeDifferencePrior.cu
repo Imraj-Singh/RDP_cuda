@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include "CudaKernels.h"
+#include <chrono>
 
 // Wrapper for computeRelativeDifferencePriorGradientKernel
 void runGradientKernelOnCPUVectors(std::vector<float>& tmp_grad, const std::vector<float>& image, const std::vector<float>& weights, const std::vector<float>& kappa, const std::vector<float>& penalisation_factor, const std::vector<float>& gamma, const std::vector<float>& epsilon, const int z_dim, const int y_dim, const int x_dim) {
@@ -36,7 +37,14 @@ void runGradientKernelOnCPUVectors(std::vector<float>& tmp_grad, const std::vect
     dim3 blocksPerGrid(x_dim/threadsPerBlock.x + 1, y_dim/threadsPerBlock.y + 1, z_dim/threadsPerBlock.z + 1);
 
     // Run the kernel function
-    computeRelativeDifferencePriorGradientKernel<<<blocksPerGrid, threadsPerBlock>>>(d_tmp_grad, d_image, d_weights, d_kappa, d_penalisation_factor, d_gamma, d_epsilon, z_dim, y_dim, x_dim);
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < 10; i++)
+    {
+        computeRelativeDifferencePriorGradientKernel<<<blocksPerGrid, threadsPerBlock>>>(d_tmp_grad, d_image, d_weights, d_kappa, d_penalisation_factor, d_gamma, d_epsilon, z_dim, y_dim, x_dim);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_seconds = end - start;
+    std::cout << "CUDA time = " << elapsed_seconds.count() << "s\n";
 
     // copy the result back to the host
     cudaMemcpy(tmp_grad.data(), d_tmp_grad, size, cudaMemcpyDeviceToHost);
