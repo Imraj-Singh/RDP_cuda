@@ -1,5 +1,5 @@
 #include "stir/IO/OutputFileFormat.h"
-#include "CudaRelativeDifferencePriorClass.h"
+#include "CudaRelativeDifferencePrior.h"
 #include "stir/recon_buildblock/RelativeDifferencePrior.h"
 #include "stir/IO/read_from_file.h"
 #include "stir/is_null_ptr.h"
@@ -30,11 +30,16 @@ int main()
     shared_ptr<target_type> gradient_cpu_sptr(density_sptr->get_empty_copy());
 
     /////// setup prior objects
-    CudaRelativeDifferencePriorClass<float> prior_cuda(only_2D, kappa, gamma, epsilon);
+    CudaRelativeDifferencePrior<float> prior_cuda(only_2D, kappa, gamma, epsilon);
     prior_cuda.set_up(density_sptr);
+    prior_cuda.set_up_cuda(density_sptr);
+    prior_cuda.set_kappa_sptr(density_sptr);
+    prior_cuda.set_penalisation_factor(0.1f);
 
     RelativeDifferencePrior<float> prior_cpu(only_2D, kappa, gamma, epsilon);
     prior_cpu.set_up(density_sptr);
+    prior_cpu.set_kappa_sptr(density_sptr);
+    prior_cpu.set_penalisation_factor(0.1f);
 
     /////// Compute and add prior gradients to density_sptr
     prior_cuda.compute_gradient(*gradient_cuda_sptr, *density_sptr);
@@ -57,6 +62,7 @@ int main()
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 10; i++)
     {
+        double cuda_prior_value = prior_cuda.compute_value(*density_sptr);
         prior_cuda.compute_gradient(*gradient_cuda_sptr, *density_sptr);
     }
     auto end = std::chrono::high_resolution_clock::now();
@@ -66,6 +72,7 @@ int main()
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 10; i++)
     {
+        double cpu_prior_value = prior_cpu.compute_value(*density_sptr);
         prior_cpu.compute_gradient(*gradient_cpu_sptr, *density_sptr);
     }
     end = std::chrono::high_resolution_clock::now();
